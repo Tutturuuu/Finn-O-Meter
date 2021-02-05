@@ -15,7 +15,6 @@ WiFiServer server(80);
 
 void setup() {
   lcd.begin(16, 2);
-  lcd.print("Starte...");
   Serial.begin(9600);      // initialize serial communication
   //pinMode(9, OUTPUT);      // set the LED pin mode
 
@@ -35,11 +34,15 @@ void setup() {
   while (status != WL_CONNECTED) {
     Serial.print("Attempting to connect to Network named: ");
     Serial.println(ssid);                   // print the network name (SSID);
-
+    lcd.print("Finn-O-Meter");
+    lcd.setCursor(0,1);
+    lcd.print(ip);
     // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
     status = WiFi.begin(ssid, pass);
     // wait 10 seconds for connection:
     delay(10000);
+    lcd.print(ip);
+    delay(1000);
   }
   server.begin();                           // start the web server on port 80
   printWifiStatus();                        // you're connected now, so print out the status
@@ -71,10 +74,10 @@ void loop() {
             client.println();
 
             // the content of the HTTP response follows the header:
-            client.print("Status: <a href=\"/E\">SEHR WICHTIG</a> (Stufe 3)<br>");
-            client.print("Status: <a href=\"/H\">WICHTIG</a> (Stufe 2)<br>");
-            client.print("Status: <a href=\"/L\">ANKLOPFEN</a> (Stufe 1)<br>");
-            client.print("Status: <a href=\"/N\">Nichts</a> (Stufe 0)<br>");
+            client.print("<a href=\"/E\">Bitte Leise!!!!</a> (Stufe 3/3)<br>");
+            client.print("<a href=\"/H\">In Meeting</a>      (Stufe 2/3)<br>");
+            client.print("<a href=\"/L\">Beschaeftigt</a>    (Stufe 1/3)<br>");
+            client.print("<a href=\"/N\">Abrufbar</a>        (Stufe 0/3)<br>");
             client.print("Aktuelle Stufe: " + String(stufe));
 
             // The HTTP response ends with another blank line:
@@ -94,7 +97,7 @@ void loop() {
             lcd.clear();
             lcd.print("Stufe 2");
             lcd.setCursor(0,1);
-            lcd.print("Wichtig!");
+            lcd.print("In Meeting");
             delay(500);
         }
         if (currentLine.endsWith("GET /L")) {
@@ -102,7 +105,7 @@ void loop() {
             lcd.clear();
             lcd.print("Stufe 1");
             lcd.setCursor(0,1);
-            lcd.print("Anklopfen");
+            lcd.print("Beschaeftigt");
             delay(500);
         }
         if (currentLine.endsWith("GET /E")) {
@@ -110,7 +113,7 @@ void loop() {
             lcd.clear();
             lcd.print("Stufe 3");
             lcd.setCursor(0,1);
-            lcd.print("!!!WICHTIG!!!");
+            lcd.print("Bitte Leise!!!");
             delay(500);
         }
         if (currentLine.endsWith("GET /N")) {
@@ -118,7 +121,7 @@ void loop() {
             lcd.clear();
             lcd.print("Stufe 0");
             lcd.setCursor(0,1);
-            lcd.print("Nichts");
+            lcd.print("Abrufbar");
             delay(500);
         }
       }
@@ -131,6 +134,7 @@ void loop() {
 }
 
 void printWifiStatus() {
+  // print the SSID of the network you're attached to:
   Serial.print("SSID: ");
   Serial.println(WiFi.SSID());
 
