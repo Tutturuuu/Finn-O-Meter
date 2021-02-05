@@ -3,7 +3,6 @@
 #include <WiFiNINA.h>
 #include "arduino_secrets.h" 
 IPAddress ip(192, 168, 178, 141);    
-///////please enter your sensitive data in the Secret tab/arduino_secrets.h
 char ssid[] = SECRET_SSID;        // your network SSID (name)
 char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as key for WEP)
 int keyIndex = 0;                 // your network key index number (needed only for WEP)
@@ -15,13 +14,9 @@ WiFiServer server(80);
 
 void setup() {
   lcd.begin(16, 2);
-  Serial.begin(9600);      // initialize serial communication
-  //pinMode(9, OUTPUT);      // set the LED pin mode
-
-  // check for the WiFi module:
+  Serial.begin(9600);
   if (WiFi.status() == WL_NO_MODULE) {
     Serial.println("Communication with WiFi module failed!");
-    // don't continue
     while (true);
   }
 
@@ -138,7 +133,6 @@ void printWifiStatus() {
   Serial.print("SSID: ");
   Serial.println(WiFi.SSID());
 
-  // print your board's IP address:
   IPAddress ip = WiFi.localIP();
   Serial.print("IP Address: ");
   Serial.println(ip);
