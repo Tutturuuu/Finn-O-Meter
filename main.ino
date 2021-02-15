@@ -1,3 +1,4 @@
+#include <ArduinoHttpClient.h>
 #include <LiquidCrystal.h>
 #include <SPI.h>
 #include <WiFiNINA.h>
@@ -7,12 +8,23 @@ char ssid[] = SECRET_SSID;        // your network SSID (name)
 char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as key for WEP)
 int keyIndex = 0;                 // your network key index number (needed only for WEP)
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
-
+const int BUTTON_PIN = 7; // Arduino pin connected to button's pin
+const int LED_PIN    = 9; // Arduino pin connected to LED's pin
+const char serverName[] = "api.pushover.net";  // server name
+int port = 80;
+const String user = "um6nsiyaqft7uwq4xewcpbyznrn8cz";
+const String token = "anviwaox7yr3kinzgae57xnf9euidh";
+int ledState = LOW;     // the current state of LED
+int lastButtonState;    // the previous state of button
+int currentButtonState; // the current state of button
 int stufe;
 int status = WL_IDLE_STATUS;
 WiFiServer server(80);
-
+WiFiClient wifi;
+HttpClient client = HttpClient(wifi, serverName, port);
 void setup() {
+  pinMode(BUTTON_PIN, INPUT_PULLUP); // set arduino pin to input pull-up mode
+  pinMode(LED_PIN, OUTPUT);          // set arduino pin to output mode
   lcd.begin(16, 2);
   Serial.begin(9600);
   if (WiFi.status() == WL_NO_MODULE) {
@@ -35,18 +47,33 @@ void setup() {
     // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
     status = WiFi.begin(ssid, pass);
     // wait 10 seconds for connection:
-    delay(10000);
-    lcd.print(ip);
-    delay(1000);
+    delay(7000);
+  lcd.clear();
   }
   server.begin();                           // start the web server on port 80
   printWifiStatus();                        // you're connected now, so print out the status
-  lcd.clear();
   lcd.print("Kein Status");
+  currentButtonState = digitalRead(BUTTON_PIN);
 }
 
 
 void loop() {
+  ledState = HIGH;
+  digitalWrite(LED_PIN, ledState);
+  lastButtonState    = currentButtonState;      // save the last state
+  currentButtonState = digitalRead(BUTTON_PIN); // read new state
+
+  if(lastButtonState == HIGH && currentButtonState == LOW) {
+    Serial.println("The button is pressed");
+    pushMsg(token, user, "Bitte Kommen!");
+    // toggle state of LED
+    ledState = HIGH;
+    digitalWrite(LED_PIN, ledState);
+    delay(500);
+    ledState = LOW;
+    // control LED arccoding to the toggled state
+    digitalWrite(LED_PIN, ledState); 
+  }
   delay(300);
   WiFiClient client = server.available();   // listen for incoming clients
 
@@ -119,6 +146,22 @@ void loop() {
             lcd.print("Abrufbar");
             delay(500);
         }
+        if (currentLine.endsWith("GET /A")) {
+            stufe = 99;
+            lcd.clear();
+            lcd.print("Finn-O-Meter");
+            lcd.setCursor(0,1);
+            lcd.print("Ich komm' schon!");
+            delay(500);
+        }
+        if (currentLine.endsWith("GET /S")) {
+            stufe = 99;
+            lcd.clear();
+            lcd.print("Finn-O-Meter");
+            lcd.setCursor(0,1);
+            lcd.print("Im Voicechat");
+            delay(500);
+        }
       }
     }
     // close the connection:
@@ -126,6 +169,8 @@ void loop() {
     Serial.println("client disconnected");
   }
   Serial.println("Stufe: " + String(stufe));
+  ledState = HIGH;
+  digitalWrite(LED_PIN, ledState);
 }
 
 void printWifiStatus() {
@@ -146,3 +191,22 @@ void printWifiStatus() {
   Serial.print("To see this page in action, open a browser to http://");
   Serial.println(ip);
 }
+void pushMsg(String token, String user, String message) {
+  String httpRequestData = "token=" + token + "&user=" + user + "&message=" + message + "&priority=2&retry=60&expire=3600&callback=https://schule.finnlab.de/E";
+  Serial.println("making POST request");
+  String contentType = "application/x-www-form-urlencoded";
+  String postData = httpRequestData;
+
+  client.post("/1/messages.json", contentType, postData);
+
+
+  int statusCode = client.responseStatusCode();
+  Serial.print("Status code: ");
+  Serial.println(statusCode);
+  String response = client.responseBody();
+  Serial.print("Response: ");
+  Serial.println(response);
+
+  //Serial.println("Wait 1 second");
+  delay(1000);
+  }
